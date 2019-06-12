@@ -13,6 +13,7 @@ If you do not have `devtools` installed, you will need to run the commented out 
 ``` r
 #install.packages("devtools")
 devtools::install_github("LiRogers/londonair")
+library(londonair)
 ```
 
 Package functions
@@ -70,15 +71,7 @@ Hourly monitoring data can be fetched as follows:
 # For all sites and species:
 df <- importLondon(start_date = as.Date('2019-01-01'),
                       end_date = as.Date('2019-01-07'))
-```
 
-    ## No data available for site HB4
-
-    ## No data available for site HB9
-
-    ## No data available for site TH2
-
-``` r
 # For specified sites and species:
 df <- importLondon(start_date = as.Date('2019-01-01'),
                       end_date = as.Date('2019-01-07'),

@@ -22,6 +22,7 @@ If you do not have `devtools` installed, you will need to run the commented out 
 ```{r Installation, eval=FALSE}
 #install.packages("devtools")
 devtools::install_github("LiRogers/londonair")
+library(londonair)
 ```
 
 ## Package functions
@@ -46,7 +47,7 @@ This gets meta data for all air quality monitoring sites across London. The equi
 
 Hourly monitoring data can be fetched as follows:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, message=FALSE}
 # For all sites and species:
 df <- importLondon(start_date = as.Date('2019-01-01'),
                       end_date = as.Date('2019-01-07'))
