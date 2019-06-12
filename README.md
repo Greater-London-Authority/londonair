@@ -1,4 +1,4 @@
-GLAir
+londonair
 ================
 
 This package provides tools to download air quality data for London.
@@ -6,26 +6,26 @@ This package provides tools to download air quality data for London.
 Installation
 ------------
 
-To install GLAir from github you need to use the `devtools` package.
+To install `londonair` from github you need to use the `devtools` package.
 
 If you do not have `devtools` installed, you will need to run the commented out line of code as well.
 
 ``` r
 #install.packages("devtools")
-#devtools::install_github("LiRogers/GLAir")
+devtools::install_github("LiRogers/londonair")
 ```
 
 Package functions
 -----------------
 
-GLAir contains functions that fetch meta data and monitoring data for air quality monitoring sites across the whole of London, or for the 2 main sensor networks, the London Air Quality Network (LAQN) and the Air Quality England (AQE) network.
+londonair contains functions that fetch meta data and monitoring data for air quality monitoring sites across the whole of London, or for the 2 main sensor networks, the London Air Quality Network (LAQN) and the Air Quality England (AQE) network.
 
 ### Site meta data
 
 Meta data can be fetched as follows:
 
 ``` r
-meta_data <- getMetaAllLondon()
+meta_data <- getMetaLondon()
 
 meta_data %>%
   head()
@@ -68,7 +68,7 @@ Hourly monitoring data can be fetched as follows:
 
 ``` r
 # For all sites and species:
-df <- importAllLondon(start_date = as.Date('2019-01-01'),
+df <- importLondon(start_date = as.Date('2019-01-01'),
                       end_date = as.Date('2019-01-07'))
 ```
 
@@ -80,14 +80,14 @@ df <- importAllLondon(start_date = as.Date('2019-01-01'),
 
 ``` r
 # For specified sites and species:
-df <- importAllLondon(start_date = as.Date('2019-01-01'),
+df <- importLondon(start_date = as.Date('2019-01-01'),
                       end_date = as.Date('2019-01-07'),
                       sites = c("BG1", "WL1", "MY1"),
                       species = c("NO2", "PM10", "PM25"))
 
-# Providing meta data - this will speed up your code if you're making multiple calls to importAllLondon
-meta_data <- getMetaAllLondon()
-df <- importAllLondon(start_date = as.Date('2019-01-01'),
+# Providing meta data - this will speed up your code if you're making multiple calls to importLondon
+meta_data <- getMetaLondon()
+df <- importLondon(start_date = as.Date('2019-01-01'),
                       end_date = as.Date('2019-01-07'),
                       sites = c("BG1", "WL1", "MY1"),
                       species = c("NO2", "PM10", "PM25"),
@@ -99,7 +99,7 @@ df %>%
 
     ##         date_time_gmt code                              site  no2 pm10
     ## 1 2019-01-01 00:00:00  BG1 Barking and Dagenham - Rush Green   NA   NA
-    ## 2 2019-01-01 00:00:00  MY1     Westminster - Marylebone Road 52.5 34.8
+    ## 2 2019-01-01 00:00:00  MY1     Westminster - Marylebone Road 50.9 35.5
     ## 3 2019-01-01 01:00:00  BG1 Barking and Dagenham - Rush Green 10.4   NA
     ## 4 2019-01-01 01:00:00  MY1     Westminster - Marylebone Road 46.7 25.2
     ## 5 2019-01-01 02:00:00  BG1 Barking and Dagenham - Rush Green  6.3   NA
@@ -112,6 +112,6 @@ df %>%
     ## 5  Suburban Barking and Dagenham    LAQN 51.56375  0.177891
     ## 6  Kerbside          Westminster    LAQN 51.52254 -0.154590
 
-This will work for sites in both networks. To fetch the data from just one of the networks the equivalent functions are `importLAQN()` and `importAQE()`, which have the same parameters as `importAllLondon()`.
+This will work for sites in both networks. To fetch the data from just one of the networks the equivalent functions are `importLAQN()` and `importAQE()`, which have the same parameters as `importLondon()`.
 
 The format of the monitoring data returned will work with the utility functions included in the [OpenAir R package](http://davidcarslaw.github.io/openair/).

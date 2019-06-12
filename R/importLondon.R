@@ -1,11 +1,11 @@
-#' @title importAllLondon
+#' @title importLondon
 #' @description Import air quality data from across London for specified parameters 
 #' @param start_date Inclusive start date of data request. Must be a date object, Default: Sys.Date() - 1
 #' @param end_date Inclusive end date of data request. Must be date object, Default: Sys.Date() - 1
 #' @param sites character vector of site codes or 'all' to fetch all available sites, Default: 'all'
 #' @param species character vector of species codes or 'all' to fetch all available species, Default: 'all'
 #' @param borough_sf A simple-features data frame containing London Borough polygons, Default: NULL
-#' @param meta_data Meta data dataframe, as fetched by importAllLondon etc. If not provided will be fetched, Default: NULL
+#' @param meta_data Meta data dataframe, as fetched by importLondon etc. If not provided will be fetched, Default: NULL
 #' @param verbose logical. Include site meta data in returned data frame, Default: TRUE
 #' @return A data frame of hourly monitoring results
 #' @details If borough_sf is not provided, local authority name and inner/outer london category will not be returned.
@@ -13,18 +13,18 @@
 #' \dontrun{
 #' if(interactive()){
 #' # For all sites/species:
-#' df <- importAllLondon(start_date = as.Date('2019-01-01'),
+#' df <- importLondon(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'))
 #' 
 #' # For specified sites and species:
-#' df <- importAllLondon(start_date = as.Date('2019-01-01'),
+#' df <- importLondon(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'),
 #' sites = c("BG1", "WL1", "MY1"),
 #' species = c("NO2", "PM10", "PM2.5"))
 #' 
 #' # Providing meta data
-#' meta_data <- getMetaAllLondon()
-#' df <- importAllLondon(start_date = as.Date('2019-01-01'),
+#' meta_data <- getMetaLondon()
+#' df <- importLondon(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'),
 #' sites = c("BG1", "WL1", "MY1"),
 #' species = c("NO2", "PM10", "PM2.5"),
@@ -33,11 +33,11 @@
 #' }
 #' @seealso 
 #'  
-#' @rdname importAllLondon
+#' @rdname importLondon
 #' @export 
 #' @import checkmate
 #' @import dplyr
-importAllLondon <- function(start_date = Sys.Date() - 1,
+importLondon <- function(start_date = Sys.Date() - 1,
                             end_date = Sys.Date() - 1,
                             sites = "all", species = "all",
                             borough_sf = NULL, meta_data = NULL,
@@ -47,7 +47,7 @@ importAllLondon <- function(start_date = Sys.Date() - 1,
 
   # Get meta data if not provided
   if (checkmate::test_null(meta_data)) {
-    meta_data <- getMetaAllLondon(borough_sf)
+    meta_data <- getMetaLondon(borough_sf)
   } else {
     checkmate::assert_class(meta_data, "data.frame")
     checkmate::assert_names(x = names(meta_data),

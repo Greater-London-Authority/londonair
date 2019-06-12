@@ -1,4 +1,4 @@
-#' @title getMetaAllLondon
+#' @title getMetaLondon
 #' @description Get the meta data for all air quality monitoring sites in London
 #' @param borough_sf A simple-features data frame containing London Borough polygons. , Default: NULL
 #' @return A data frame containing meta data for all air quality monitoring sites in London
@@ -10,18 +10,18 @@
 #' if(interactive()){
 #' # Without borough_sf
 #' 
-#' meta_data <- getMetaAllLondon()
+#' meta_data <- getMetaLondon()
 #' 
 #' # With borough_sf
 #' boroughs <- st_read("London_Borough.shp")
-#' meta_data <- getMetaAllLondon(borough_sf = boroughs)
+#' meta_data <- getMetaLondon(borough_sf = boroughs)
 #'  }
 #' }
-#' @rdname getMetaAllLondon
+#' @rdname getMetaLondon
 #' @export 
 #' @import checkmate
 #' @import dplyr
-getMetaAllLondon <- function(borough_sf = NULL) {
+getMetaLondon <- function(borough_sf = NULL) {
 
 #################################### Checks ####################################
 
@@ -38,9 +38,9 @@ getMetaAllLondon <- function(borough_sf = NULL) {
 
 ######################### Fetch both sets of data ##############################
 
-  aqe_sites <- getMetaAQE(borough_sf)
+  aqe_sites <- suppressWarnings(getMetaAQE(borough_sf))
 
-  laqn_sites <- getMetaLAQN(borough_sf)
+  laqn_sites <- suppressWarnings(getMetaLAQN(borough_sf))
 
 ############################ Sort and drop dups ################################
 

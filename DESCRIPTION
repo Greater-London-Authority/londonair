@@ -1,8 +1,8 @@
-Package: GLAir
-Title: What the Package Does (one line, title case)
+Package: londonair
+Title: This Package Provides Tools to Download Air Quality Data for London
 Version: 0.0.0.9000
-Authors@R: person("First", "Rogers", email = "libby.rogers@london.gov.uk", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Libby", "Rogers", email = "libby.rogers@london.gov.uk", role = c("aut", "cre"))
+Description: Monitoring and meta data can be downloaded for any air quality monitoring sensor in London in the London Air Quality Network(LAQN) or the Air Quality England (AQE) sensor networks.
 Depends: R (>= 3.5.0)
 License: What license is it under?
 Encoding: UTF-8
