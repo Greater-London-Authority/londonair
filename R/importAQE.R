@@ -79,7 +79,7 @@ importAQE <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
   checkmate::assert_date(start_date,
                          lower = meta_data %>%
                            dplyr::pull(date_measurement_started) %>%
-                           min(),
+                           min(., na.rm = TRUE),
                          upper = min(Sys.Date(), end_date),
                          any.missing = FALSE,
                          min.len = 1,
@@ -87,7 +87,7 @@ importAQE <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
   checkmate::assert_date(end_date,
                          lower = meta_data %>%
                            dplyr::pull(date_measurement_started) %>%
-                           min() %>%
+                           min(., na.rm = TRUE) %>%
                            max(., start_date),
                          upper = Sys.Date(),
                          any.missing = FALSE,
