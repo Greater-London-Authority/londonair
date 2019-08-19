@@ -15,13 +15,13 @@
 #' # For all sites/species:
 #' df <- importBreathe(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'))
-#' 
+#'
 #' # For specified sites and species (only NO2 available for Breathe London):
 #' df <- importBreathe(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'),
 #' sites = c("2245", "16245"),
 #' species = "NO2")
-#' 
+#'
 #' # Providing meta data
 #' meta_data <- getMetaLondon()
 #' df <- importLondon(start_date = as.Date('2019-01-01'),
@@ -41,6 +41,7 @@
 #' @importFrom lubridate ymd_hms
 #' @importFrom lubridate hours
 #' @importFrom lubridate days
+#' @importFrom stats setNames
 importBreathe <- function(start_date = Sys.Date() - 1,
                           end_date = Sys.Date() - 1,
                           sites = "all", species = "all", borough_sf = NULL,
@@ -107,7 +108,7 @@ importBreathe <- function(start_date = Sys.Date() - 1,
 
   checkmate::assert_logical(verbose)
 
-############################## Work out what data we need ##############################
+########################## Work out what data we need ##########################
 
   all_species <- meta_data %>%
     dplyr::pull(species_code) %>%
@@ -120,7 +121,7 @@ importBreathe <- function(start_date = Sys.Date() - 1,
   site_info <- meta_data %>%
     dplyr::filter(species_code %in% species) %>%
     dplyr::filter(date_measurement_started <= end_date) %>%
-    dplyr::filter(date_measurement_finised >= start_date
+    dplyr::filter(date_measurement_finished >= start_date
                   | is.na(date_measurement_finished)) %>%
     dplyr::select(-species_code, -dplyr::contains("date_measurement")) %>%
     dplyr::distinct()
@@ -145,26 +146,51 @@ importBreathe <- function(start_date = Sys.Date() - 1,
     }
   }
 
-############################ Get data from data store ####################
+############################## Get data from data store ########################
 
-  datastore_url <- "https://data.london.gov.uk/download/breathe-london-aqmesh-pods/267507cc-9740-4ea7-be05-4d6ae16a5e4a/NO2_data.csv"
+  base_url <- "https://data.london.gov.uk/api/table/syhv4_87rng/export.csv?"
+  
+  # Construct SQL query for datastore API
 
-  df <- utils::read.csv(datastore_url, stringsAsFactors = FALSE)
+  sql_select_query <- "sql=SELECT date_utc, no2_ugm3, pod_id_location, location_name, ratification_status FROM dataset WHERE"
+
+  num_returned <- 5000
+  offset <- 0
+
+  df <- data.frame()
+
+  while (num_returned == 5000) {
+    sql_where_query <- paste0(" pod_id_location IN (",
+                           paste(sites_to_get, collapse = ", "),
+                           ") AND date_utc >= '", start_date - 1, "'",
+                           " AND date_utc <= '", end_date + 1, "' OFFSET ",
+                           offset, " ROWS")
+
+    full_url <- paste0(base_url, sql_select_query, sql_where_query)
+
+    qdf <- utils::read.csv(full_url, stringsAsFactors = FALSE)
+
+    df <- dplyr::bind_rows(df, qdf)
+
+    num_returned <- nrow(qdf)
+    offset <- offset + 5000
+  }
+
 
   df <- df %>%
-    dplyr::filter(pod_id_location %in% site_to_get) %>%
-    # change date format to get the same as LAQN
-    dplyr::mutate(date_time_gmt = lubridate::ymd_hms(date_utc) - lubridate::hours(1)) %>%
+    stats::setNames(gsub("^.*\\.\\.", "", names(.))) %>%
+    # change date format to get the same as LAQN and redo filter
+    dplyr::mutate(date_time_gmt = (lubridate::ymd_hms(date_utc) 
+                                   - lubridate::hours(1)),
+                  code = as.character(pod_id_location)) %>%
     dplyr::filter(date_time_gmt >= start_date) %>%
     dplyr::filter(date_time_gmt < end_date + lubridate::days(1)) %>%
-    dplyr::select(date_time_gmt, code = pod_id_location, site = location_name,
+    dplyr::select(date_time_gmt, code, site = location_name,
            no2 = no2_ugm3, ratification_status)
 
   if (verbose) {
-    needed_meta_data <- meta_data %>%
-      dplyr::select(-site, -species_code, -dplyr::contains('date'), -network)
     df <- df %>%
-      dplyr::left_join(., needed_meta_data, by = 'code')
+      dplyr::left_join(., site_info, by = "code")
   }
 
 ############################### Return dataframe ###############################

@@ -17,15 +17,11 @@
 #' meta_data <- getMetaBreathe(borough_sf = boroughs)
 #'  }
 #' }
-#' @seealso 
-#'  \code{\link[utils]{read.table}}
-#'  \code{\link[lubridate]{ymd_hms}}
 #' @rdname getMetaBreathe
 #' @export 
 #' @import checkmate
 #' @importFrom utils read.csv
 #' @import dplyr
-#' @importFrom lubridate dmy_hm
 getMetaBreathe <- function(borough_sf = NULL) {
 
 #################################### Checks ####################################
@@ -48,13 +44,15 @@ getMetaBreathe <- function(borough_sf = NULL) {
 
   df <- df %>%
     # All NO2 for now
+    mutate_at(vars(matches("date")), ~gsub(" [0-9]{1,2}:[0-9]{2}$", "", .)) %>%
     dplyr::mutate(species_code = "NO2",
            network = "Breathe",
-           date_measurement_started = lubridate::dmy_hm(start_date_utc),
-           date_measurement_finished = lubridate::dmy_hm(end_date_utc)) %>%
+           date_measurement_started = as.Date(start_date_utc, format = "%d/%m/%Y"),
+           date_measurement_finished = as.Date(end_date_utc, format = "%d/%m/%Y"),
+           code = as.character(pod_id_location)) %>%
     dplyr::select(local_authority_name = borough,
            site = location_name,
-           code = pod_id_location,
+           code,
            site_type = type, ulez,
            latitude, longitude, species_code,
            date_measurement_started,

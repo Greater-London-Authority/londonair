@@ -55,8 +55,3 @@ meta_data = meta_data)
  }
 }
 }
-\seealso{
-\code{\link[jsonlite]{toJSON, fromJSON}}
- \code{\link[tidyr]{spread}}
- \code{\link[stats]{setNames}}
-}
