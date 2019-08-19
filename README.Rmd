@@ -27,7 +27,7 @@ library(londonair)
 
 ## Package functions
 
-londonair contains functions that fetch meta data and monitoring data for air quality monitoring sites across the whole of London, or for the 2 main sensor networks, the London Air Quality Network (LAQN) and the Air Quality England (AQE) network.
+londonair contains functions that fetch meta data and monitoring data for air quality monitoring sites across the whole of London, or for the 3 main sensor networks, the London Air Quality Network (LAQN), Breathe London, and the Air Quality England (AQE) network.
 
 ### Site meta data
 
@@ -41,7 +41,7 @@ meta_data %>%
   head()
 ```
 
-This gets meta data for all air quality monitoring sites across London. The equivalent functions for the 2 networks are `getMetaLAQN()` and `getMetaAQE()`.
+This gets meta data for all air quality monitoring sites across London. The equivalent functions for the 3 networks are `getMetaLAQN()`, `getMetaBreathe()` and `getMetaAQE()`.
 
 ### Monitoring data
 
@@ -70,6 +70,6 @@ df %>%
   head()
 ```
 
-This will work for sites in both networks. To fetch the data from just one of the networks the equivalent functions are `importLAQN()` and `importAQE()`, which have the same parameters as `importLondon()`.
+This will work for sites in both networks. To fetch the data from just one of the networks the equivalent functions are `importLAQN()`, `importBreathe()` and `importAQE()`, which have the same parameters as `importLondon()`.
 
 The format of the monitoring data returned will work with the utility functions included in the [OpenAir R package](http://davidcarslaw.github.io/openair/).
