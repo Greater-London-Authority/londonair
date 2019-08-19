@@ -19,7 +19,7 @@ importAQE(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
 
 \item{borough_sf}{A simple-features data frame containing London Borough polygons, Default: NULL}
 
-\item{meta_data}{Meta data dataframe, as fetched by importAllLondon etc. If not provided will be fetched, Default: NULL}
+\item{meta_data}{Meta data dataframe, as fetched by importLondon etc. If not provided will be fetched, Default: NULL}
 
 \item{verbose}{logical. Include site meta data in returned data frame, Default: TRUE}
 }

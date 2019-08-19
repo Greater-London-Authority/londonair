@@ -1,10 +1,10 @@
-#' @title importLAQN
-#' @description Import air quality data from across the Lonon Air Quality Network (LAQN) for specified parameters 
+#' @title importBreathe
+#' @description Import air quality data from across the Breathe London Network for specified parameters
 #' @param start_date Inclusive start date of data request. Must be a date object, Default: Sys.Date() - 1
 #' @param end_date Inclusive end date of data request. Must be date object, Default: Sys.Date() - 1
 #' @param sites character vector of site codes or 'all' to fetch all available sites, Default: 'all'
 #' @param species character vector of species codes or 'all' to fetch all available species, Default: 'all'
-#' @param borough_sf A simple-features data frame containing London Borough polygons, Default: NULL
+#' @param borough_sf A simple-features data frame containing London Borough polygons. , Default: NULL
 #' @param meta_data Meta data dataframe, as fetched by importLondon etc. If not provided will be fetched, Default: NULL
 #' @param verbose logical. Include site meta data in returned data frame, Default: TRUE
 #' @return OUTPUT_DESCRIPTION
@@ -13,14 +13,14 @@
 #' \dontrun{
 #' if(interactive()){
 #' # For all sites/species:
-#' df <- importLAQN(start_date = as.Date('2019-01-01'),
+#' df <- importBreathe(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'))
 #' 
-#' # For specified sites and species:
-#' df <- importLondon(start_date = as.Date('2019-01-01'),
+#' # For specified sites and species (only NO2 available for Breathe London):
+#' df <- importBreathe(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'),
-#' sites = c("GB6", "CR5"),
-#' species = c("NO2", "PM10", "PM2.5"))
+#' sites = c("2245", "16245"),
+#' species = "NO2")
 #' 
 #' # Providing meta data
 #' meta_data <- getMetaLondon()
@@ -32,25 +32,25 @@
 #'  }
 #' }
 #' @seealso 
-#'  \code{\link[jsonlite]{toJSON, fromJSON}}
-#'  \code{\link[tidyr]{spread}}
-#'  \code{\link[stats]{setNames}}
-#' @rdname importLAQN
+#'  \code{\link[utils]{read.table}}
+#' @rdname importBreathe
 #' @export 
 #' @import checkmate
 #' @import dplyr
-#' @importFrom jsonlite fromJSON
-#' @importFrom tidyr spread
-#' @importFrom stats setNames
-importLAQN <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
-                       sites = "all", species = "all",
-                       borough_sf = NULL, meta_data = NULL, verbose = TRUE) {
+#' @importFrom utils read.csv
+#' @importFrom lubridate ymd_hms
+#' @importFrom lubridate hours
+#' @importFrom lubridate days
+importBreathe <- function(start_date = Sys.Date() - 1,
+                          end_date = Sys.Date() - 1,
+                          sites = "all", species = "all", borough_sf = NULL,
+                          meta_data = NULL, verbose = TRUE) {
 
 #################################### Checks ####################################
 
   # Get meta data if not provided
   if (checkmate::test_null(meta_data)) {
-    meta_data <- getMetaLAQN(borough_sf)
+    meta_data <- getMetaBreathe(borough_sf)
   } else {
     checkmate::assert_class(meta_data, "data.frame")
     checkmate::assert_names(x = names(meta_data),
@@ -62,7 +62,7 @@ importLAQN <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
                               "date_measurement_finished", "network"))
 
     meta_data <- meta_data %>%
-      dplyr::filter(network == "LAQN")
+      dplyr::filter(network == "Breathe")
   }
 
   if (checkmate::test_string(sites, pattern = "^all$", ignore.case = TRUE)) {
@@ -107,9 +107,8 @@ importLAQN <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
 
   checkmate::assert_logical(verbose)
 
-############################## Prep for API calls ##############################
+############################## Work out what data we need ##############################
 
-  # Get list of species
   all_species <- meta_data %>%
     dplyr::pull(species_code) %>%
     unique()
@@ -118,25 +117,19 @@ importLAQN <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
     species <- all_species
   }
 
-  # Make end date inclusive
-  end_date_str <- format(end_date + 1, "%d-%m-%Y")
-  start_date_str <- format(start_date, "%d-%m-%Y")
-
-  # Get basic meta data for sites
   site_info <- meta_data %>%
     dplyr::filter(species_code %in% species) %>%
     dplyr::filter(date_measurement_started <= end_date) %>%
-    dplyr::filter(date_measurement_finished >= start_date
-           | is.na(date_measurement_finished)) %>%
+    dplyr::filter(date_measurement_finised >= start_date
+                  | is.na(date_measurement_finished)) %>%
     dplyr::select(-species_code, -dplyr::contains("date_measurement")) %>%
-    unique()
+    dplyr::distinct()
 
   if (!(get_all_sites)) {
     site_info <- site_info %>%
       dplyr::filter(code %in% sites)
   }
 
-  # List of sites to fetch
   sites_to_get <- site_info %>%
     dplyr::pull(code) %>%
     unique()
@@ -152,88 +145,29 @@ importLAQN <- function(start_date = Sys.Date() - 1, end_date = Sys.Date() - 1,
     }
   }
 
-################################### Call API ###################################
+############################ Get data from data store ####################
 
-  laqn_url <-  "http://api.erg.kcl.ac.uk/AirQuality/Data/Site"
+  datastore_url <- "https://data.london.gov.uk/download/breathe-london-aqmesh-pods/267507cc-9740-4ea7-be05-4d6ae16a5e4a/NO2_data.csv"
 
-  df <- data.frame()
+  df <- utils::read.csv(datastore_url, stringsAsFactors = FALSE)
 
-  # Fetch data for each site
-  for (site_code in sites_to_get) {
-    query_url <- paste0(laqn_url,
-                        "/SiteCode=", site_code,
-                        "/StartDate=", start_date_str,
-                        "/EndDate=", end_date_str,
-                        "/Json")
+  df <- df %>%
+    dplyr::filter(pod_id_location %in% site_to_get) %>%
+    # change date format to get the same as LAQN
+    dplyr::mutate(date_time_gmt = lubridate::ymd_hms(date_utc) - lubridate::hours(1)) %>%
+    dplyr::filter(date_time_gmt >= start_date) %>%
+    dplyr::filter(date_time_gmt < end_date + lubridate::days(1)) %>%
+    dplyr::select(date_time_gmt, code = pod_id_location, site = location_name,
+           no2 = no2_ugm3, ratification_status)
 
-    # Warn if no data
-    data <- tryCatch(
-      data <- jsonlite::fromJSON(query_url)[["AirQualityData"]][["Data"]],
-      error = function(cond) {
-        if (!(get_all_sites)) {
-          message(paste("No data available for site", site_code))
-        }
-        return(NULL)
-        }
-      )
-
-    # Clean site data
-    if (!is.null(data)) {
-      data <- data %>%
-        dplyr::mutate(code = site_code)
-      names(data) <- data %>%
-        names() %>%
-        gsub("@", "", .) %>%
-        gsub("MeasurementDate", "date_time_", .) %>%
-        gsub("([a-z]){1}([A-Z]){1}", "\\1_\\2", .) %>%
-        tolower(.)
-
-      # Add to main data frame
-      df <- rbind(df, data)
-    }
-  }
-
-############################ Clean any fetched data ############################
-
-  if (nrow(df) > 0) {
-    df <-  df %>%
-      # Add meta data
-      dplyr::left_join(., site_info, by = "code") %>%
-      # Only keep species asked for
-      dplyr::filter(species_code %in% species) %>%
-      dplyr::mutate(value = as.numeric(value),
-             latitude = as.numeric(latitude),
-             longitude = as.numeric(longitude),
-             date_time_gmt = (as.POSIXct(date_time_gmt,
-                                         format = "%Y-%m-%d %H:%M:%S",
-                                         tz = "GMT"))) %>%
-      tidyr::spread(., key = species_code, value = value) %>%
-      dplyr::select(date_time_gmt, code, site,
-             suppressWarnings(dplyr::one_of(species)),
-             site_type,
-             suppressWarnings(dplyr::one_of(
-               c("local_authority_name", "inner_outer_london")
-               )),
-             latitude, longitude) %>%
-      dplyr::mutate_at(dplyr::vars(suppressWarnings(dplyr::one_of(species))),
-                ~ round(., digits = 1)) %>%
-      # Convert for snake_case
-      stats::setNames(gsub("([a-z]){1}([A-Z]){1}", "\\1_\\2", names(.))) %>%
-      stats::setNames(tolower(names(.))) %>%
-      stats::setNames(gsub("pm25", "pm2\\.5", names(.))) %>%
-      dplyr::mutate(latitude = round(latitude, digits = 6),
-             longitude = round(longitude, digits = 6))
-    # If verbose = FALSE drop some meta data
-    if (!(verbose)) {
-      df <- df %>%
-        dplyr::select(-site_type, -dplyr::starts_with("local"),
-                      -dplyr::starts_with("inner"),
-                      -latitude, -longitude)
-    }
+  if (verbose) {
+    needed_meta_data <- meta_data %>%
+      dplyr::select(-site, -species_code, -dplyr::contains('date'), -network)
+    df <- df %>%
+      dplyr::left_join(., needed_meta_data, by = 'code')
   }
 
 ############################### Return dataframe ###############################
 
   return(df)
-
 }

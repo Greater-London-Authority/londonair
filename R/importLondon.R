@@ -1,5 +1,5 @@
 #' @title importLondon
-#' @description Import air quality data from across London for specified parameters 
+#' @description Import air quality data from across London for specified parameters
 #' @param start_date Inclusive start date of data request. Must be a date object, Default: Sys.Date() - 1
 #' @param end_date Inclusive end date of data request. Must be date object, Default: Sys.Date() - 1
 #' @param sites character vector of site codes or 'all' to fetch all available sites, Default: 'all'
@@ -9,19 +9,19 @@
 #' @param verbose logical. Include site meta data in returned data frame, Default: TRUE
 #' @return A data frame of hourly monitoring results
 #' @details If borough_sf is not provided, local authority name and inner/outer london category will not be returned.
-#' @examples 
+#' @examples
 #' \dontrun{
 #' if(interactive()){
 #' # For all sites/species:
 #' df <- importLondon(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'))
-#' 
+#'
 #' # For specified sites and species:
 #' df <- importLondon(start_date = as.Date('2019-01-01'),
 #' end_date = as.Date('2019-01-07'),
 #' sites = c("BG1", "WL1", "MY1"),
 #' species = c("NO2", "PM10", "PM2.5"))
-#' 
+#'
 #' # Providing meta data
 #' meta_data <- getMetaLondon()
 #' df <- importLondon(start_date = as.Date('2019-01-01'),
@@ -31,10 +31,10 @@
 #' meta_data = meta_data)
 #'  }
 #' }
-#' @seealso 
-#'  
+#' @seealso
+#'
 #' @rdname importLondon
-#' @export 
+#' @export
 #' @import checkmate
 #' @import dplyr
 importLondon <- function(start_date = Sys.Date() - 1,
@@ -60,7 +60,7 @@ importLondon <- function(start_date = Sys.Date() - 1,
 
   }
 
-  # Split sites into LAQN and AQE
+  # Split sites into LAQN, AQE and Breathe
   # While checking they're valid
   if (checkmate::test_character(sites, pattern =  "^all$",
                                 ignore.case = TRUE)) {
@@ -69,6 +69,7 @@ importLondon <- function(start_date = Sys.Date() - 1,
       dplyr::filter(network == "AQE") %>%
       dplyr::pull(code) %>%
       unique()
+    breathe_sites <- "all"
   } else {
     possible_sites <- meta_data %>%
       dplyr::pull(code) %>%
@@ -86,9 +87,14 @@ importLondon <- function(start_date = Sys.Date() - 1,
       dplyr::filter(network == "AQE") %>%
       dplyr::pull(code) %>%
       unique()
+    breathe_sites <- meta_data %>%
+      dplyr::filter(code %in% sites) %>%
+      dplyr::filter(network == "Breathe") %>%
+      dplyr::pull(code) %>%
+      unique()
   }
 
-############################ Fetch both sets of data ###########################
+############################ Fetch all sets of data ###########################
 
   if (!(is.null(laqn_sites)) & (length(laqn_sites) > 0)) {
 
@@ -117,7 +123,21 @@ importLondon <- function(start_date = Sys.Date() - 1,
     aqe <- data.frame()
   }
 
-  df <- dplyr::bind_rows(laqn, aqe)
+  if (!is.null(breathe_sites) & (length(breathe_sites) > 0)) {
+
+    breathe <- importBreathe(sites = breathe_sites,
+                             start_date = start_date, end_date = end_date,
+                             species = species, borough_sf = borough_sf,
+                             meta_data = meta_data %>%
+                               dplyr::filter(network == "Breathe"),
+                             verbose = verbose) %>%
+      dplyr::mutate(network = "Breathe")
+
+  } else {
+    breathe <- data.frame()
+  }
+
+  df <- dplyr::bind_rows(laqn, aqe, breathe)
 
 ################################## Clean data ##################################
 

@@ -36,15 +36,17 @@ getMetaLondon <- function(borough_sf = NULL) {
             not be included as borough_sf not supplied")
   }
 
-######################### Fetch both sets of data ##############################
+######################### Fetch all sets of data ##############################
 
   aqe_sites <- suppressWarnings(getMetaAQE(borough_sf))
 
   laqn_sites <- suppressWarnings(getMetaLAQN(borough_sf))
 
+  breathe_sites <- suppressWarnings(getMetaBreathe(borough_sf))
+
 ############################ Sort and drop dups ################################
 
-  all_sites <- dplyr::bind_rows(aqe_sites, laqn_sites) %>%
+  all_sites <- dplyr::bind_rows(aqe_sites, laqn_sites, breathe_sites) %>%
     dplyr::arrange(dplyr::desc(network)) %>%
     dplyr::distinct(code, species_code, .keep_all = TRUE) %>%
     dplyr::arrange(local_authority_name, code, species_code)

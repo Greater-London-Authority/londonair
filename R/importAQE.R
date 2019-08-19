@@ -5,7 +5,7 @@
 #' @param sites character vector of site codes or 'all' to fetch all available sites, Default: 'all'
 #' @param species character vector of species codes or 'all' to fetch all available species, Default: 'all'
 #' @param borough_sf A simple-features data frame containing London Borough polygons, Default: NULL
-#' @param meta_data Meta data dataframe, as fetched by importAllLondon etc. If not provided will be fetched, Default: NULL
+#' @param meta_data Meta data dataframe, as fetched by importLondon etc. If not provided will be fetched, Default: NULL
 #' @param verbose logical. Include site meta data in returned data frame, Default: TRUE
 #' @return A data frame of hourly monitoring results
 #' @details If borough_sf is not provided, local authority name and inner/outer london category will not be returned.
