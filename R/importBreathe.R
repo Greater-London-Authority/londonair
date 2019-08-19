@@ -101,9 +101,8 @@ importBreathe <- function(start_date = Sys.Date() - 1,
     get_all_species <- FALSE
     species <- toupper(species)
     checkmate::assert_character(species)
-    checkmate::assert_subset(species, meta_data %>%
-                               dplyr::pull(species_code) %>%
-                               unique())
+    # Only NO2 available for now, but don't throw error
+    checkmate::assert_subset(species, c('CO','NO2','O3','PM10','PM25','SO2'))
   }
 
   checkmate::assert_logical(verbose)
@@ -123,7 +122,7 @@ importBreathe <- function(start_date = Sys.Date() - 1,
     dplyr::filter(date_measurement_started <= end_date) %>%
     dplyr::filter(date_measurement_finished >= start_date
                   | is.na(date_measurement_finished)) %>%
-    dplyr::select(-species_code, -dplyr::contains("date_measurement")) %>%
+    dplyr::select(-species_code, -dplyr::contains("date_measurement"), -site) %>%
     dplyr::distinct()
 
   if (!(get_all_sites)) {
