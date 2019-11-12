@@ -33,7 +33,3 @@ meta_data <- getMetaBreathe(borough_sf = boroughs)
  }
 }
 }
-\seealso{
-\code{\link[utils]{read.table}}
- \code{\link[lubridate]{ymd_hms}}
-}

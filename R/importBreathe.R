@@ -42,7 +42,7 @@
 #' @importFrom lubridate hours
 #' @importFrom lubridate days
 #' @importFrom stats setNames
-#' @importFrom json fromJSON
+#' @importFrom rjson fromJSON
 importBreathe <- function(start_date = Sys.Date() - 1,
                           end_date = Sys.Date() - 1,
                           sites = "all", species = "all", borough_sf = NULL,
