@@ -42,7 +42,7 @@
 #' @importFrom lubridate hours
 #' @importFrom lubridate days
 #' @importFrom stats setNames
-#' @importFrom rjson fromJSON
+#' @importFrom jsonlite fromJSON
 importBreathe <- function(start_date = Sys.Date() - 1,
                           end_date = Sys.Date() - 1,
                           sites = "all", species = "all", borough_sf = NULL,
@@ -123,7 +123,7 @@ importBreathe <- function(start_date = Sys.Date() - 1,
     dplyr::filter(date_measurement_started <= end_date) %>%
     dplyr::filter(date_measurement_finished >= start_date
                   | is.na(date_measurement_finished)) %>%
-    dplyr::select(-species_code, -dplyr::contains("date_measurement"), -site) %>%
+    dplyr::select(-species_code, -dplyr::contains("date_measurement"), -site, -scaling_method) %>%
     dplyr::distinct()
 
   if (!(get_all_sites)) {
@@ -149,7 +149,7 @@ importBreathe <- function(start_date = Sys.Date() - 1,
 ############################## Get data from data store ########################
   
   dataset_url <- "https://data.london.gov.uk/api/dataset/breathe-london-aqmesh-pods"
-  json_info <- rjson::fromJSON(file = dataset_url)
+  json_info <- jsonlite::fromJSON(dataset_url)
   table_ref <- names(json_info$resources$`267507cc-9740-4ea7-be05-4d6ae16a5e4a`$tables)
 
   base_url <- paste("https://data.london.gov.uk/api/table", table_ref, "export.csv?", sep = "/")
