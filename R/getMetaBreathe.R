@@ -43,12 +43,11 @@ getMetaBreathe <- function(borough_sf = NULL) {
   df <- utils::read.csv(datastore_url, stringsAsFactors = FALSE)
 
   df <- df %>%
-    # All NO2 for now
-    mutate_at(vars(matches("date")), ~gsub(" [0-9]{1,2}:[0-9]{2}$", "", .)) %>%
-    dplyr::mutate(species_code = "NO2",
+    mutate_at(vars(matches("date")), ~gsub(" [0-9]{1,2}:[0-9]{2}:[0-9]{2}$", "", .)) %>%
+    dplyr::mutate(species_code = toupper(gsub("_", "", pollutant)),
            network = "Breathe",
-           date_measurement_started = as.Date(start_date_utc, format = "%d/%m/%Y"),
-           date_measurement_finished = as.Date(end_date_utc, format = "%d/%m/%Y"),
+           date_measurement_started = as.Date(start_date_utc, format = "%Y-%m-%d"),
+           date_measurement_finished = as.Date(end_date_utc, format = "%Y-%m-%d"),
            code = as.character(pod_id_location)) %>%
     dplyr::select(local_authority_name = borough,
            site = location_name,

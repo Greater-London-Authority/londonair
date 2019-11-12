@@ -145,7 +145,7 @@ importLondon <- function(start_date = Sys.Date() - 1,
   all_species <- df %>%
     dplyr::select(-date_time_gmt, -code, -site, -site_type,
            -dplyr::matches(
-             "local_authority_name|inner_outer_london|latitude|longitude|network")) %>%
+             "local_authority_name|inner_outer_london|latitude|longitude|network|ratification")) %>%
     names()
 
   # Select relevant data

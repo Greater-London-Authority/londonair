@@ -42,6 +42,7 @@
 #' @importFrom lubridate hours
 #' @importFrom lubridate days
 #' @importFrom stats setNames
+#' @importFrom json fromJSON
 importBreathe <- function(start_date = Sys.Date() - 1,
                           end_date = Sys.Date() - 1,
                           sites = "all", species = "all", borough_sf = NULL,
@@ -146,12 +147,16 @@ importBreathe <- function(start_date = Sys.Date() - 1,
   }
 
 ############################## Get data from data store ########################
+  
+  dataset_url <- "https://data.london.gov.uk/api/dataset/breathe-london-aqmesh-pods"
+  json_info <- rjson::fromJSON(file = dataset_url)
+  table_ref <- names(json_info$resources$`267507cc-9740-4ea7-be05-4d6ae16a5e4a`$tables)
 
-  base_url <- "https://data.london.gov.uk/api/table/syhv4_87rng/export.csv?"
+  base_url <- paste("https://data.london.gov.uk/api/table", table_ref, "export.csv?", sep = "/")
   
   # Construct SQL query for datastore API
 
-  sql_select_query <- "sql=SELECT date_utc, no2_ugm3, pod_id_location, location_name, ratification_status FROM dataset WHERE"
+  sql_select_query <- "sql=SELECT * FROM dataset WHERE"
 
   num_returned <- 5000
   offset <- 0
@@ -163,7 +168,7 @@ importBreathe <- function(start_date = Sys.Date() - 1,
                            paste(sites_to_get, collapse = ", "),
                            ") AND date_utc >= '", start_date - 1, "'",
                            " AND date_utc <= '", end_date + 1, "' OFFSET ",
-                           offset, " ROWS")
+                           format(offset, scientific = FALSE), " ROWS")
 
     full_url <- paste0(base_url, sql_select_query, sql_where_query)
 
@@ -177,15 +182,17 @@ importBreathe <- function(start_date = Sys.Date() - 1,
 
 
   df <- df %>%
-    stats::setNames(gsub("^.*\\.\\.", "", names(.))) %>%
+    select(-matches("^.*\\.\\.")) %>%
     # change date format to get the same as LAQN and redo filter
     dplyr::mutate(date_time_gmt = (lubridate::ymd_hms(date_utc) 
                                    - lubridate::hours(1)),
                   code = as.character(pod_id_location)) %>%
     dplyr::filter(date_time_gmt >= start_date) %>%
     dplyr::filter(date_time_gmt < end_date + lubridate::days(1)) %>%
+    stats::setNames(gsub("pm2_5", "pm25", names(.))) %>%
+    stats::setNames(gsub("_ugm3", "", names(.))) %>%
     dplyr::select(date_time_gmt, code, site = location_name,
-           no2 = no2_ugm3, ratification_status)
+                  matches(paste(tolower(species), collapse = "|")))
 
   if (verbose) {
     df <- df %>%
