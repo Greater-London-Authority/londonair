@@ -189,10 +189,11 @@ importBreathe <- function(start_date = Sys.Date() - 1,
                   code = as.character(pod_id_location)) %>%
     dplyr::filter(date_time_gmt >= start_date) %>%
     dplyr::filter(date_time_gmt < end_date + lubridate::days(1)) %>%
-    stats::setNames(gsub("pm2_5", "pm2.5", names(.))) %>%
+    stats::setNames(gsub("pm2_5", "pm25", names(.))) %>%
     stats::setNames(gsub("_ugm3", "", names(.))) %>%
     dplyr::select(date_time_gmt, code, site = location_name,
-                  matches(paste(tolower(species), collapse = "|")))
+                  matches(paste(tolower(species), collapse = "|"))) %>%
+    stats::setNames(gsub("pm25", "pm2\\.5", names(.)))
 
   if (verbose) {
     df <- df %>%
